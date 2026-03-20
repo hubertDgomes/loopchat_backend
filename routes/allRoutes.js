@@ -1,5 +1,6 @@
 import express from "express"
 import authControllers from "../controllers/authControllers.js"
+
 import multer from "multer";
 
 const router = express.Router()
@@ -23,5 +24,6 @@ router.post("/login" , authControllers.signinController)
 router.get("/allusers" , authControllers.getAllUser)
 router.get("/getuser" , authControllers.logedUserData)
 router.get("/getuserbyid/:id" , authControllers.getUserById)
+
 
 export default router
