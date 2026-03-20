@@ -8,6 +8,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import http from "http";
 import { Server } from "socket.io";
+import messageSchema from "./model/messageSchema.js";
+import { log } from "console";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -63,15 +65,23 @@ io.on("connection", (socket) => {
   // Join Room
   socket.on("join_room", (room) => {
     socket.join(room);
-    console.log(`User joined room: ${room}`);
+    // console.log(`User joined room: ${room}`);
   });
 
   // Send Message
-  socket.on("send_message", (data) => {
-    // { room, message, author }
-    console.log(data);
-    io.to(data.room).emit("receive_message", data);
+  socket.on("send_message", async (data) => {
+    // data is { room, text, sender }
+    const msg = await messageSchema.create({ room: data.room, sender: data.sender, text: data.text });
+    // Emit the exact message document created in the DB back to the clients
+    io.to(data.room).emit("receive_message", msg);
   });
+
+  //Fetch old message 
+  socket.on("get_message" , async (roomId)=> {
+    const message = await messageSchema.find({room : roomId}).sort({createdAt  : 1})
+    socket.emit("load_message" , message)
+    console.log(message);
+  })
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
