@@ -21,10 +21,23 @@ const __dirname = path.dirname(__filename);
 // Middlewares
 app.use(express.json());
 
-app.use(cors({
-  origin: ["http://localhost:5173" , "https://loopchat-client.vercel.app"],
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://loopchat-client.vercel.app"
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith(".vercel.app")) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
 
 app.set("trust proxy", 1);
 
@@ -33,6 +46,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: { secure: true, sameSite: "none", httpOnly: true }
+  // cookie: { secure: false, sameSite: "lax", httpOnly: false }
 }));
 
 // Routes
@@ -52,10 +66,7 @@ const server = http.createServer(app);
 
 // 🔥 SOCKET.IO SETUP
 const io = new Server(server, {
-  cors: {
-    origin: ["http://localhost:5173" , "https://loopchat-client.vercel.app"],
-    credentials: true
-  }
+  cors: corsOptions
 });
 
 // 🔥 SOCKET LOGIC
